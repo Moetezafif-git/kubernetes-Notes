@@ -2,7 +2,7 @@
 
 # 🚀 Kubernetes Mastery Guide
 
-![Uploading image.png…]()
+![image](https://github.com/user-attachments/assets/a8bbd00e-2801-4be8-9828-63cc41746d4e)
 
 
 ### 🌐 **Kubernetes Command Flexibility**
