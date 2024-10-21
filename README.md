@@ -2,8 +2,8 @@
 
 # 🚀 Kubernetes Mastery Guide
 
-![Kubernetes Architecture](![image](https://github.com/user-attachments/assets/6aa7cfe8-b9af-430e-9534-102998fb09f2)
-)
+![image](https://github.com/user-attachments/assets/6aa7cfe8-b9af-430e-9534-102998fb09f2)
+
 
 ### 🌐 **Kubernetes Command Flexibility**
 
