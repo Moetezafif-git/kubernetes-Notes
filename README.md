@@ -326,4 +326,3 @@ spec:
     limits.memory: 4Gi
 ```
 
-This version includes clear examples of YAML for various Kubernetes components and provides practical commands for managing resources.
