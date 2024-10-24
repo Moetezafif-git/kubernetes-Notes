@@ -3,6 +3,11 @@
 ![image](https://github.com/user-attachments/assets/f5451a4a-0be5-42be-be5e-41ee4e9ac145)
 
 
+Here’s a refined Markdown file with YAML examples illustrating Kubernetes concepts, commands, and workflows:
+
+# Kubernetes Notes
+
+![Kubernetes Architecture](./kubernetes_architect.drawio.png)
 
 - You can use singular, plural, or short form commands, for example:
   ```bash
@@ -215,3 +220,110 @@ spec:
   template:
     metadata:
       labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.14.2
+        ports:
+        - containerPort: 80
+```
+
+## Resource Requests and Limits
+- Define resource limits and requests in the pod spec:
+```yaml
+resources:
+  requests:
+    memory: "64Mi"
+    cpu: "250m"
+  limits:
+    memory: "128Mi"
+    cpu: "500m"
+```
+
+- View resource quota for a namespace:
+  ```bash
+  kubectl describe ns myns
+  ```
+
+### Example YAML for Resource Quota
+```yaml
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: compute-resources
+spec:
+  hard:
+    requests.cpu: "1"
+    requests.memory: 1Gi
+    limits.cpu: "2"
+    limits.memory: 2Gi
+```
+
+## ConfigMaps
+- Create a ConfigMap from literals:
+  ```bash
+  kubectl create configmap special-config --from-literal=special.how=very --from-literal=special.type=charm
+  ```
+
+- Create a ConfigMap from files:
+  ```bash
+  kubectl create configmap cm_name --from-file=filename
+  kubectl create configmap cm_name --from-file=properties/
+  ```
+
+- Create a ConfigMap from an environment file:
+  ```bash
+  kubectl create configmap cm_name --from-env-file=env.sh
+  ```
+
+### Example YAML for ConfigMap
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: game-demo
+data:
+  player_initial_lives: "3"
+  ui_properties_file_name: "user-interface.properties"
+  game.properties: |
+    enemy.types=aliens,monsters
+    player.maximum-lives=5
+  user-interface.properties: |
+    color.good=purple
+    color.bad=yellow
+    allow.textmode=true
+```
+
+## Namespace and Quotas
+- Create a namespace:
+  ```bash
+  kubectl create ns myns
+  ```
+
+- Apply resource quotas:
+  ```bash
+  kubectl apply -f quota.yml --namespace=myns
+  ```
+
+### Example YAML for Namespace and Quota
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: myns
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: compute-quota
+  namespace: myns
+spec:
+  hard:
+    requests.cpu: "2"
+    requests.memory: 2Gi
+    limits.cpu: "4"
+    limits.memory: 4Gi
+```
+
+This version includes clear examples of YAML for various Kubernetes components and provides practical commands for managing resources.
