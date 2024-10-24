@@ -3,176 +3,215 @@
 ![image](https://github.com/user-attachments/assets/f5451a4a-0be5-42be-be5e-41ee4e9ac145)
 
 
-### 🌐 **Kubernetes Command Flexibility**
+Here’s a refined Markdown file with YAML examples illustrating Kubernetes concepts, commands, and workflows:
 
-Kubernetes allows flexible ways to interact with resources:
+# Kubernetes Notes
 
+![Kubernetes Architecture](./kubernetes_architect.drawio.png)
+
+- You can use singular, plural, or short form commands, for example:
+  ```bash
+  kubectl get pod
+  kubectl get pods
+  kubectl get po
+  ```
+
+## Creating a Pod with Generator
+> **Note:** The `--generator` flag is deprecated.
 ```bash
-kubectl get pod            # Singular form
-kubectl get pods           # Plural form
-kubectl get po             # Short form
+kubectl run --image=nginx:alpine myfirstpod --labels=example=myfirstpod
 ```
 
----
-
-### 🛠 **Create Your First Pod Like a Pro!**
-
-> **Deprecated Approach** (Avoid using this in modern Kubernetes versions):
-```bash
-kubectl run pod --generator=run-pod/v1 --image=coolgourav/nginx-custom
+### Example YAML for Pod
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myfirstpod
+  labels:
+    app: nginx
+spec:
+  containers:
+  - name: nginx
+    image: nginx:alpine
+    ports:
+    - containerPort: 80
 ```
 
-> **Modern Approach**:
+- Get details of a pod running on a node:
+  ```bash
+  kubectl get po -o wide
+  ```
+
+## YAML and JSON Formats
+- Get resource output in YAML or JSON:
+  ```bash
+  kubectl get po -o yaml
+  kubectl get po -o json
+  ```
+
+## Understanding Kubernetes Resources
+- To find a resource:
+  ```bash
+  kubectl api-resources | grep -i limit
+  ```
+- To learn about a resource:
+  ```bash
+  kubectl explain pods | less
+  kubectl explain pod --recursive | less
+  ```
+
+## Viewing and Deleting Pods
+- View detailed pod information:
+  ```bash
+  kubectl describe pod nginx | less
+  ```
+- Delete a pod:
+  ```bash
+  kubectl delete pod myfirstpod
+  kubectl delete pods --all
+  kubectl edit pod podname
+  ```
+
+## Watching Pods Creation
+- Watch a pod being created:
+  ```bash
+  kubectl get pod -w
+  ```
+
+## General Command Structure
 ```bash
-kubectl run myfirstpod --image=nginx:alpine --labels=example=myfirstpod
+kubectl <action> <resource_type> <resource_name> <data>
+```
+- Example: Adding a label to a pod:
+  ```bash
+  kubectl label pod myfirstpod env1=test
+  ```
+- Label all pods:
+  ```bash
+  kubectl label pod --all env1=test
+  ```
+
+- Get pods with labels:
+  ```bash
+  kubectl get pods --show-labels
+  ```
+
+## Running Commands Inside a Pod
+- Execute a command inside a pod:
+  ```bash
+  kubectl exec podname -- env
+  ```
+- If the pod has multiple containers:
+  ```bash
+  kubectl exec podname -c container_name -- env
+  ```
+
+- Enter a container’s bash shell:
+  ```bash
+  kubectl exec podname -it -- bash
+  ```
+- For multiple containers:
+  ```bash
+  kubectl exec podname -c container_name -it -- bash
+  ```
+
+## Setting Commands in a Container
+- Set commands for a container in the pod YAML:
+```yaml
+args: ['sleep', '50']
 ```
 
-Check the pod details (including which node it's running on):
+## Grep in Pod YAML
 ```bash
-kubectl get po -o wide
+grep name podname.yml
 ```
 
----
+## Exposing Pods via Services
+- To expose a pod:
+  ```bash
+  kubectl expose pod podname --port=8000 --target-port=80 --name=myservice
+  ```
 
-### 🔍 **Viewing Resources in Style**
-
-View resources in **YAML** or **JSON** format:
-```bash
-kubectl get po -o yaml
-kubectl get po -o json
+### Example YAML for a Service
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: myservice
+spec:
+  selector:
+    app: myapp
+  ports:
+  - protocol: TCP
+    port: 8000
+    targetPort: 80
 ```
 
----
+- To list services and get the IP and port:
+  ```bash
+  kubectl get svc
+  curl <service-ip>:8000
+  ```
 
-### 📖 **Exploring Resources - Knowledge is Power!**
+- Exposing a pod with NodePort for external access:
+  ```bash
+  kubectl expose pod podname --type=NodePort --port=8000 --target-port=80 --name=myservice
+  ```
 
-Don’t know what a resource is? Let Kubernetes explain it to you:
-```bash
-kubectl explain pods | less          # Learn about pods
-kubectl explain pod --recursive | less
+## Scaling and Replication
+- Scaling up/down the number of replicas:
+  ```bash
+  kubectl scale rc --replicas=5 replicaControllerName
+  ```
+- Edit the replication controller to scale:
+  ```bash
+  kubectl edit rc rcname
+  ```
+
+### Example YAML for a Replication Controller
+```yaml
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: nginx
+spec:
+  replicas: 3
+  selector:
+    app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
 ```
 
----
+- Deleting an RC without deleting its pods:
+  ```bash
+  kubectl delete rc rcname --cascade=false
+  ```
 
-### 🔎 **Inspecting Pods Like a Detective**
+## Deployments and Rollouts
+- Rollout and rollback deployments:
+  ```bash
+  kubectl rollout history deployment mydeployment
+  kubectl rollout undo deployment mydeployment
+  kubectl rollout undo deployment mydeployment --to-revision=2
+  ```
 
-Want to dive into the specifics of your pod? Run:
-```bash
-kubectl describe pod nginx | less
-```
-
----
-
-### 🚫 **Managing Pods: Creation and Deletion**
-
-To delete pods (even those stuck in a `CrashLoopBackOff` state):
-```bash
-kubectl delete pod myfirstpod
-kubectl delete pods --all           # Deletes all pods
-```
-
----
-
-### 👀 **Real-Time Pod Creation - Watch the Magic!**
-
-Observe your pod being created in real time:
-```bash
-kubectl get pod -w
-```
-
----
-
-### 🏷 **Labeling: Tag Your Pods for Easy Identification**
-
-Add labels to your pods like a pro:
-```bash
-kubectl label pod myfirstpod env1=lool
-kubectl label pod --all env1=lool    # Label all pods
-```
-
-View your labels:
-```bash
-kubectl get pods --show-labels
-```
-
----
-
-### 🖥 **Running Commands Inside Pods: Shells, Variables & More!**
-
-Run environment commands inside a pod:
-```bash
-kubectl exec podname env
-```
-
-Get inside the container’s shell:
-```bash
-kubectl exec podname -it bash
-```
-
-For multi-container pods, specify the container:
-```bash
-kubectl exec podname -c container_name -it bash
-```
-
----
-
-### 🌐 **Networking Insights**
-
-Listen on a specific port:
-```bash
-netcat -l -p 8000
-```
-
-Check open ports:
-```bash
-netstat -nltp
-```
-
----
-
-### 🔧 **Services: Expose Your Pods Like a Pro**
-
-Use a **ClusterIP** for internal communication, or expose it externally with a **NodePort**:
-```bash
-kubectl expose pod podname --port=8000 --target-port=80 --name=myservice
-kubectl expose pod podname --type=NodePort --port=8000 --target-port=80 --name=myservice
-```
-
-Check the service:
-```bash
-kubectl get svc
-```
-
-Test it with `curl`:
-```bash
-curl <NodeIP>:<NodePort>
-```
-
-![Service Types](./service.png)
-
----
-
-### 🎛 **Deployments: Scaling and Rolling Updates**
-
-Deployments are your powerhouse for managing rolling updates, rollbacks, and scaling:
-```bash
-kubectl rollout history deployment <deployment_name>    # Check deployment history
-kubectl rollout undo deployment <deployment_name>       # Undo the last deployment
-kubectl rollout undo --to-revision=2 deployment <deployment_name>   # Roll back to a specific revision
-```
-
-You can **pause** or **resume** deployments:
-```bash
-kubectl rollout pause deployment <deployment_name>
-kubectl rollout resume deployment <deployment_name>
-```
-
-Or create them via YAML:
+### Example YAML for Deployment
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nginx-deployment
+  labels:
+    app: nginx
 spec:
   replicas: 3
   selector:
@@ -181,47 +220,3 @@ spec:
   template:
     metadata:
       labels:
-        app: nginx
-    spec:
-      containers:
-      - name: nginx
-        image: nginx:1.14.2
-        ports:
-        - containerPort: 80
-```
-
----
-
-### 📊 **Resource Quotas: Control Resource Usage Like a Boss**
-
-Set limits on resources in namespaces with resource quotas:
-```bash
-kubectl create ns myns
-kubectl get resourcequotas -n myns
-kubectl apply -f quota.yml --namespace=myns
-```
-
-**Example Quota YAML**:
-```yaml
-apiVersion: v1
-kind: ResourceQuota
-metadata:
-  name: compute-quota
-  namespace: myns
-spec:
-  hard:
-    requests.cpu: "4"
-    requests.memory: 1Gi
-    limits.cpu: "10"
-    limits.memory: 2Gi
-```
-
----
-
-### 🏁 **The Final Frontier: Kubernetes Mastery**
-
-Kubernetes is a beast, but with these commands, you're in control. Whether it's creating pods, scaling deployments, or managing resource quotas, you've got the tools to master your Kubernetes cluster!
-
-![Replication Set](./rcset.png)
-
----
