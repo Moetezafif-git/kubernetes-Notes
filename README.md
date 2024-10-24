@@ -5,307 +5,484 @@
 
 
 
-🚀 This guide covers essential `kubectl` commands and YAML examples for deploying, managing, and scaling Kubernetes resources. Perfect for quick reference! 🌐
 
----
 
-## 🔧 Commands Overview
+- You can use singular, plural, or abbreviated forms of commands with `kubectl`:
+  ```
+  kubectl get pod
+  kubectl get pods
+  kubectl get po
+  ```
 
-Use singular, plural, or short form commands. Here are examples of each:
-```bash
-kubectl get pod    # Singular
-kubectl get pods   # Plural
-kubectl get po     # Short form
-```
+- To create your first pod using a generator (note that the generator option is deprecated):
+  ```bash
+  kubectl run --image=nginx:alpine myfirstpod --labels=example=myfirstpod
+  ```
+  (The previous generator command will not work anymore.)
 
-### ⚙️ Create a Pod (Deprecated: `--generator`)
-```bash
-kubectl run --image=nginx:alpine myfirstpod --labels=example=myfirstpod
-```
+- To get detailed information about the pods running on nodes:
+  ```bash
+  kubectl get po -o wide
+  ```
 
-### YAML Example for Creating a Pod 🐳
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: myfirstpod
-  labels:
-    app: nginx
-spec:
-  containers:
-    - name: nginx
-      image: nginx:alpine
-      ports:
-        - containerPort: 80
-```
+- For YAML and JSON format output:
+  ```bash
+  kubectl get po -o yaml
+  kubectl get po -o json
+  ```
 
-Use `kubectl get pod -o wide` to get detailed info on a pod and its assigned node. 🖥️
+- If you want to search for a specific resource:
+  ```bash
+  kubectl api-resources | grep -i limit
+  ```
 
----
+- To learn more about a specific resource, such as pods:
+  ```bash
+  kubectl explain pods | less
+  kubectl explain pod --recursive | less
+  ```
 
-## 📝 YAML vs JSON Formats
-
-📄 Display resource output in YAML or JSON:
-```bash
-kubectl get pod -o yaml
-kubectl get pod -o json
-```
-
----
-
-## 🔍 Exploring Kubernetes Resources
-
-Use `kubectl api-resources | grep -i limit` to search for specific resources or `kubectl explain pods --recursive` to deep dive into resource definitions.
-
----
-
-## 🔄 View and Delete Pods
-
-- Detailed Pod view: 
+- To view details about a specific pod:
   ```bash
   kubectl describe pod nginx | less
   ```
 
-- Delete a Pod: 
+- To delete a pod (e.g., if it's in a crash loop):
   ```bash
   kubectl delete pod myfirstpod
   kubectl delete pods --all
+  kubectl edit pod podname
   ```
 
----
+- To watch pod creation in real-time:
+  ```bash
+  kubectl get pod -w
+  ```
 
-## 🔴 Watch Pod Creation in Real-Time
+- General command structure:
+  ```
+  kubectl <action> <resource_type> <resource_name> <data>
+  ```
+  Example:
+  ```bash
+  kubectl label pod myfirstpod env1=lool
+  ```
+  To label all pods:
+  ```bash
+  kubectl label pod --all env1=lool
+  ```
 
-Keep an eye on the Pod status with:
-```bash
-kubectl get pod -w
-```
+- To view pods along with their labels:
+  ```bash
+  kubectl get pods --show-labels
+  ```
 
----
+- To run a command inside a pod's container:
+  ```bash
+  kubectl exec podname env
+  ```
+  If there are multiple containers in the pod:
+  ```bash
+  kubectl exec podname -c container_name
+  ```
 
-## 🔨 General Command Structure
+- To access the bash shell of a container:
+  ```bash
+  kubectl exec podname -it bash
+  ```
+  If there are multiple containers:
+  ```bash
+  kubectl exec podname -c container_name -it bash
+  ```
 
-The typical structure is:
-```bash
-kubectl <action> <resource_type> <resource_name> <data>
-```
+- To set a command inside a container:
+  ```yaml
+  args: ['sleep', '50']
+  ```
 
-📌 **Example:**
-```bash
-kubectl label pod myfirstpod env=test  # Label a pod
-kubectl get pods --show-labels         # Show labels on pods
-```
+- To grep for the name in a `pod1.yml` file:
+  ```bash
+  grep name podname.yml
+  ```
 
----
+- To make a container listen on a specific port:
+  ```bash
+  netcat -l -p 8000
+  ```
+  To see which ports are open:
+  ```bash
+  netstat -nltp
+  ```
 
-## 🧑‍💻 Run Commands Inside Pods
+- If you have three pods and assign a ClusterIP, they can communicate with each other. For external communication, you will need a NodePort. The following image illustrates this concept:
 
-Execute commands inside running containers:
-```bash
-kubectl exec podname -- env       # Execute in default container
-kubectl exec podname -c container_name -- env  # Execute in specific container
-```
+![image](https://github.com/user-attachments/assets/53f3d535-2fbd-4714-bfd4-aeb9b2e6867f)
+![image](https://github.com/user-attachments/assets/3c14ff61-d26a-450a-a385-4f1d6ae76788)
 
-To open an interactive shell:
-```bash
-kubectl exec podname -it -- bash   # Single container
-kubectl exec podname -c container_name -it -- bash  # Multi-container
-```
+- To create a service for communication between pods:
+  ```bash
+  kubectl expose pod podname --port=8000 --target-port=80 --name myservice
+  ```
+  You can check this using:
+  ```bash
+  kubectl get svc/service/services
+  ```
+  Then test the service with:
+  ```bash
+  curl ip:8000
+  ```
 
----
+- To assign a NodePort for external access:
+  ```bash
+  kubectl expose pod podname --type=NodePort --port=8000 --target-port=80 --name myservice  # Note: may not work in Minikube
+  ```
 
-## 🌐 Exposing Pods via Services
+- **How Services Work**: In a service YAML file, the selector is crucial. If any pod has the same label as the service selector, the service will distribute requests among these pods. You can add a label to a pod like this:
+  ```bash
+  kubectl label pod myfirstpod env1=lool
+  ```
 
-Expose your Pod as a service with `kubectl expose`:
-```bash
-kubectl expose pod podname --port=8000 --target-port=80 --name=myservice
-```
 
-### Example YAML for Exposing a Pod 📡
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: myservice
-spec:
-  selector:
-    app: myapp
-  ports:
-    - protocol: TCP
-      port: 8000
-      targetPort: 80
-```
 
-🔗 Check your services with `kubectl get svc` and use `curl <service-ip>:8000` to interact with the service.
+- Running a Replication Controller (RC) will create replicas based on the template. If a pod with the same label already exists, it won’t create a new pod; however, if an existing pod is owned by another RC, a new pod will be created according to the new RC.
 
----
-
-## 🔧 Scaling & Replication
-
-🆙 **Scale resources** easily:
-```bash
-kubectl scale rc myreplicationcontroller --replicas=5
-```
-
-### Example YAML for a ReplicationController
-```yaml
-apiVersion: v1
-kind: ReplicationController
-metadata:
-  name: nginx
-spec:
-  replicas: 3
-  selector:
-    app: nginx
-  template:
-    metadata:
-      labels:
-        app: nginx
-    spec:
-      containers:
+  If you don’t specify a selector, it defaults to using the template label:
+  ```yaml
+  apiVersion: v1
+  kind: ReplicationController
+  metadata:
+    name: nginx
+  spec:
+    replicas: 3
+    selector:
+      app: nginx
+    template:
+      metadata:
+        name: nginx
+        labels:
+          app: nginx
+      spec:
+        containers:
         - name: nginx
           image: nginx
           ports:
-            - containerPort: 80
-```
+          - containerPort: 80
+  ```
 
----
+  If you delete a pod's label (e.g., `app=nginx`), it will automatically recreate the pod. If you delete the RC, all its replicas will terminate, but using `--cascade=false` will only delete the RC without terminating its pods:
+  ```bash
+  kubectl delete rc nginx --cascade=false
+  ```
 
-## 🚀 Deployments and Rollbacks
+- Scaling up or down is straightforward. You can set the number of replicas with:
+  ```bash
+  kubectl scale rc --replicas=5 replicaControllerName
+  ```
+  Alternatively, you can edit the RC directly:
+  ```bash
+  kubectl edit rc name
+  ```
 
-Manage rollouts and rollbacks:
-```bash
-kubectl rollout history deployment mydeployment  # View history
-kubectl rollout undo deployment mydeployment     # Rollback to the previous version
-kubectl rollout undo deployment mydeployment --to-revision=2  # Rollback to a specific revision
-```
+- ReplicaSets share many characteristics with Replication Controllers but offer additional features, such as label matching expressions (e.g., `In`, `NotIn`).
 
-### Example YAML for Deployment 📦
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nginx-deployment
-  labels:
-    app: nginx
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
+![image](https://github.com/user-attachments/assets/33b71e15-1ed5-4b7f-839d-67cff8b58f1b)
+
+- **Deployments** are similar to ReplicaSets with some enhancements:
+  - Rollout new versions.
+  - Rollback to previous versions.
+  - Recreate policy: sets the old version's replicas to 0 while creating replicas for the new version.
+  - Adjust replica count as needed.
+
+  Rollout triggers only on spec changes (i.e., a new version). The `maxUnavailable` setting specifies how many pods can be missing during an update, while `maxSurge` determines how many extra pods can be created.
+
+  To view rollout history:
+  ```bash
+  kubectl rollout history deployment name_of_the_deployment
+  ```
+  To undo a deployment:
+  ```bash
+  kubectl rollout undo deployment name_of_the_deployment
+  ```
+  To revert to a specific revision:
+  ```bash
+  kubectl rollout undo --to-revision=2 deployment name_of_the_deployment
+  ```
+  To pause and resume a deployment:
+  ```bash
+  kubectl rollout pause deployment name_of_the_deployment
+  kubectl rollout resume deployment name_of_the_deployment
+  ```
+
+  You can apply a deployment from a YAML file with:
+  ```bash
+  kubectl apply -f firstdeploy.yml --record
+  ```
+
+  Example Deployment YAML:
+  ```yaml
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: nginx-deployment
+    labels:
       app: nginx
-  template:
-    metadata:
-      labels:
+  spec:
+    replicas: 3
+    selector:
+      matchLabels:
         app: nginx
-    spec:
-      containers:
+    template:
+      metadata:
+        labels:
+          app: nginx
+      spec:
+        containers:
         - name: nginx
           image: nginx:1.14.2
           ports:
-            - containerPort: 80
-```
+          - containerPort: 80
+  ```
+
+- **Resource Limits**: To check memory usage for a container:
+  ```bash
+  docker container stats container_id
+  ```
+  To set fixed memory and CPU limits, refer to the image below during pod creation:
+
+  ![Resource Limits](./reqlimit.png)
+
+- By default, all resources are created in the default namespace, but there is also a public namespace that doesn’t require authentication for access. You can see many pods that control master system management with:
+  ```bash
+  kubectl get pods -n kube-system
+  ```
+
+  To change the default namespace:
+  ```bash
+  kubectl config set-context --current --namespace=test
+  ```
+
+- To check if a resource is supported in a namespace:
+  ```bash
+  kubectl api-resources | grep -i pod
+  ```
+  To apply a pod in a specific namespace:
+  ```bash
+  kubectl apply -f pod_yml --namespace test
+  ```
+  To view pods in the `test` namespace:
+  ```bash
+  kubectl get pods -n test
+  kubectl get pods --all-namespaces  # To see all namespaces' pods
+  ```
+
+- To delete a pod in a specific namespace:
+  ```bash
+  kubectl delete pod podname -n test
+  ```
+
+- To create a namespace:
+  ```bash
+  kubectl create ns myns
+  ```
+
+  To connect with a service in another namespace:
+  ```bash
+  curl servicename.namespacename.svc.cluster.local
+  ```
+
+- **Resource Quota**: This defines limits/specifications for resources within namespaces. There are two types of quotas:
+  - Compute quota (e.g., `request.cpu`)
+  - Object quota (e.g., limits on thecontinuation of Kubernetes Notes:
 
 ---
 
-## 📊 Resource Requests and Limits
+number of pods, services, etc.)
 
-Set resource requests and limits for containers in your pod spec:
-```yaml
-resources:
-  requests:
-    memory: "64Mi"
-    cpu: "250m"
-  limits:
-    memory: "128Mi"
-    cpu: "500m"
-```
+- **ConfigMap and Secret**: These are used for storing configuration data and sensitive information, respectively. Here’s how to create and use them:
 
-View resource quotas with:
-```bash
-kubectl describe ns <namespace>
-```
+  - **Creating a ConfigMap**:
+    ```bash
+    kubectl create configmap my-config --from-literal=key1=value1 --from-literal=key2=value2
+    ```
 
-### YAML Example for ResourceQuota 📉
-```yaml
-apiVersion: v1
-kind: ResourceQuota
-metadata:
-  name: compute-resources
-spec:
-  hard:
-    requests.cpu: "1"
-    requests.memory: 1Gi
-    limits.cpu: "2"
-    limits.memory: 2Gi
-```
+  - **Creating a Secret**:
+    ```bash
+    kubectl create secret generic my-secret --from-literal=password=mysecretpassword
+    ```
+
+  - **Using ConfigMap in a Pod**:
+    ```yaml
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: mypod
+    spec:
+      containers:
+      - name: mycontainer
+        image: myimage
+        env:
+        - name: MY_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              name: my-config
+              key: key1
+    ```
+
+  - **Using Secret in a Pod**:
+    ```yaml
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: mypod
+    spec:
+      containers:
+      - name: mycontainer
+        image: myimage
+        env:
+        - name: MY_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: my-secret
+              key: password
+    ```
+
+- **Volume**: Volumes provide a way to share data between containers in a pod. Types of volumes include `emptyDir`, `hostPath`, `persistentVolumeClaim`, and more.
+
+  - **Example of a Volume in a Pod**:
+    ```yaml
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: mypod
+    spec:
+      containers:
+      - name: mycontainer
+        image: myimage
+        volumeMounts:
+        - mountPath: /data
+          name: my-volume
+      volumes:
+      - name: my-volume
+        emptyDir: {}
+    ```
+
+- **Persistent Volumes (PV) and Persistent Volume Claims (PVC)**:
+  - **Creating a Persistent Volume**:
+    ```yaml
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: my-pv
+    spec:
+      capacity:
+        storage: 1Gi
+      accessModes:
+        - ReadWriteOnce
+      hostPath:
+        path: /mnt/data
+    ```
+
+  - **Creating a Persistent Volume Claim**:
+    ```yaml
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: my-pvc
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+    ```
+
+  - **Using PVC in a Pod**:
+    ```yaml
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: mypod
+    spec:
+      containers:
+      - name: mycontainer
+        image: myimage
+        volumeMounts:
+        - mountPath: /data
+          name: my-pv-volume
+      volumes:
+      - name: my-pv-volume
+        persistentVolumeClaim:
+          claimName: my-pvc
+    ```
+
+- **Network Policies**: Define how pods communicate with each other and with other network endpoints. For instance, to restrict access to a specific pod:
+  ```yaml
+  apiVersion: networking.k8s.io/v1
+  kind: NetworkPolicy
+  metadata:
+    name: my-network-policy
+  spec:
+    podSelector:
+      matchLabels:
+        app: myapp
+    policyTypes:
+    - Ingress
+    ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            role: frontend
+  ```
+
+- **Ingress**: A collection of rules for the inbound traffic to reach the services. It provides HTTP and HTTPS routing to services based on the request URL.
+  
+  - **Example Ingress Resource**:
+    ```yaml
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: my-ingress
+    spec:
+      rules:
+      - host: myapp.example.com
+        http:
+          paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: my-service
+                port:
+                  number: 80
+    ```
+
+- **Helm**: A package manager for Kubernetes, used to manage Kubernetes applications. Helm uses **charts**, which are packages of pre-configured Kubernetes resources.
+
+  - **Installing Helm**:
+    ```bash
+    curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+    ```
+
+  - **Creating a Helm Chart**:
+    ```bash
+    helm create mychart
+    ```
+
+  - **Installing a Helm Chart**:
+    ```bash
+    helm install myrelease mychart
+    ```
+
+- **Monitoring and Logging**: Tools like Prometheus for monitoring and Grafana for visualization, along with ELK (Elasticsearch, Logstash, Kibana) stack for logging, are commonly used in Kubernetes environments.
+
+  - **Installing Prometheus**:
+    ```bash
+    kubectl apply -f prometheus.yml
+    ```
+
+  - **Installing Grafana**:
+    ```bash
+    kubectl apply -f grafana.yml
+    ```
 
 ---
-
-## 🔑 ConfigMaps
-
-Create ConfigMaps from various sources:
-```bash
-kubectl create configmap myconfig --from-literal=special.how=very --from-literal=special.type=charm  # From literals
-kubectl create configmap myconfig --from-file=filename                                              # From file
-kubectl create configmap myconfig --from-env-file=env.sh                                            # From env file
-```
-
-### YAML Example for ConfigMap 📁
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: game-demo
-data:
-  player_initial_lives: "3"
-  ui_properties_file_name: "user-interface.properties"
-  game.properties: |
-    enemy.types=aliens,monsters
-    player.maximum-lives=5
-  user-interface.properties: |
-    color.good=purple
-    color.bad=yellow
-    allow.textmode=true
-```
-
----
-
-## 🏷️ Namespaces & Resource Quotas
-
-Create a namespace:
-```bash
-kubectl create ns myns
-```
-
-Apply a resource quota:
-```bash
-kubectl apply -f quota.yml --namespace=myns
-```
-
-### YAML Example for Namespace and Quota
-```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: myns
----
-apiVersion: v1
-kind: ResourceQuota
-metadata:
-  name: compute-quota
-  namespace: myns
-spec:
-  hard:
-    requests.cpu: "2"
-    requests.memory: 2Gi
-    limits.cpu: "4"
-    limits.memory: 4Gi
-```
-
----
-
-### 👾 Keep Calm and Keep Coding Kubernetes! 👾
-
-This cheatsheet provides core concepts with cool YAML examples. Explore more about Kubernetes resources to master deployments, scaling, and managing workloads seamlessly.
-
-Enjoy the journey! 💻✨
