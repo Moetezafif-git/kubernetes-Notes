@@ -3,11 +3,6 @@
 ![image](https://github.com/user-attachments/assets/f5451a4a-0be5-42be-be5e-41ee4e9ac145)
 
 
-Here’s a refined Markdown file with YAML examples illustrating Kubernetes concepts, commands, and workflows:
-
-# Kubernetes Notes
-
-![Kubernetes Architecture](./kubernetes_architect.drawio.png)
 
 - You can use singular, plural, or short form commands, for example:
   ```bash
